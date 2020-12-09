@@ -1,14 +1,21 @@
-import "./App.css";
 import { useEffect, useState } from "react";
+import "./App.css";
+import { Comments } from "./components/Comments";
 
 const API_URL = "https://jsonplaceholder.typicode.com";
 
+const generateRandomColor = () =>
+  "#" + (((1 << 24) * Math.random()) | 0).toString(16);
+
 function App() {
-  const [posts, setPosts] = useState();
+  let currentPosts;
+
+  const [message, setMessage] = useState();
+  const [randomColor, setRandomColor] = useState(generateRandomColor());
 
   useEffect(() => {
     (async () => {
-      const postsResponse = await fetch(`${API_URL}/posts`);
+      const postsResponse = await fetch(`${API_URL}/posts?_limit=10`);
 
       if (postsResponse.ok) {
         const posts = await postsResponse.json();
@@ -37,34 +44,47 @@ function App() {
             })
           );
 
-          setPosts(postsWithComments);
-          console.log(postsWithComments);
+          currentPosts = postsWithComments;
+          setMessage("Posts loaded");
         }
       }
     })();
   }, []);
 
+  useEffect(() => {
+    setTimeout(() => {
+      setRandomColor(generateRandomColor());
+    }, 5000);
+  });
+
   return (
     <div className="App">
-      {!posts && <p>No posts</p>}
-      {posts &&
-        posts.map((post) => (
+      {!currentPosts && <p>No posts</p>}
+      {currentPosts &&
+        currentPosts.map((post) => (
           <div>
             <p>
-              <strong>{post.title}</strong>
+              POST : <strong>{post.title}</strong>
             </p>
             <p>{post.body}</p>
-            <ul>
-              {post.comments &&
-                post.comments.length &&
-                post.comments.map((comment) => (
-                  <li>
-                    {comment.email} : {comment.body}
-                  </li>
-                ))}
-            </ul>
+            <Comments comments={post.comments} />
           </div>
         ))}
+
+      {message && (
+        <div
+          style={{
+            backgroundColor: randomColor,
+            color: "white",
+            position: "absolute",
+            width: "90%",
+            height: 30,
+            top: 0,
+          }}
+        >
+          {message}
+        </div>
+      )}
     </div>
   );
 }
